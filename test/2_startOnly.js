@@ -45,6 +45,30 @@ describe("start only", () => {
 
 	});
 
+	it("should split frame with no second start bit", () => {
+
+		return new Promise((resolve, reject) => {
+
+			const splitter = new SplitFrames({
+				"startWith": STX,
+				"startTimeout": 200
+			}).once("error", reject).once("data", (chunk) => {
+
+				assert.strictEqual(typeof chunk, "object", "The chunk is not an object");
+				assert.strictEqual(chunk instanceof Buffer, true, "The chunk is not a Buffer");
+				assert.deepStrictEqual(chunk, Buffer.from([ STX, 0x24 ]), "The chunk is not as expected");
+
+				resolve();
+
+			});
+
+			// tested frame
+			splitter.write(Buffer.from([ STX, 0x24 ]));
+
+		});
+
+	});
+
 	it("should split frame with one start", () => {
 
 		return new Promise((resolve, reject) => {
@@ -164,6 +188,36 @@ describe("start only", () => {
 
 	});
 
+	it("should split frame with array of two bits start", () => {
+
+		return new Promise((resolve, reject) => {
+
+			let dataCount = 0;
+
+			new SplitFrames({
+				"startWith": [ Buffer.from([ DLE, STX ]) ]
+			}).once("error", reject).on("data", (chunk) => {
+
+				++dataCount;
+
+				assert.strictEqual(typeof chunk, "object", "The chunk is not an object");
+				assert.strictEqual(chunk instanceof Buffer, true, "The chunk is not a Buffer");
+
+				if (1 === dataCount) {
+					assert.deepStrictEqual(chunk, Buffer.from([ DLE, STX, 0x24, 0x25, 0x26 ]), "The chunk is not as expected");
+				}
+				else if (2 === dataCount) {
+					assert.deepStrictEqual(chunk, Buffer.from([ DLE, STX, 0x24, 0x25 ]), "The chunk is not as expected");
+					resolve();
+				}
+
+			// tested frame
+			}).write(Buffer.from([ 0x24, DLE, STX, 0x24, 0x25, 0x26, DLE, STX, 0x24, 0x25, DLE, STX ]));
+
+		});
+
+	});
+
 	it("should split frame with escaped data", () => {
 
 		return new Promise((resolve, reject) => {
@@ -214,12 +268,7 @@ describe("start only", () => {
 				}
 
 			// tested frame
-			}).write(Buffer.from([
-				0x24,
-				STX, 0x24, 0x25, 0x26,
-				STX2, 0x24, 0x25,
-				STX
-			]));
+			}).write(Buffer.from([ 0x24, STX, 0x24, 0x25, 0x26, STX2, 0x24, 0x25, STX ]));
 
 		});
 
@@ -264,8 +313,28 @@ describe("start only", () => {
 			// tested frame
 			}).write(Buffer.from([
 				0x24,
-				STX, 0x24, DLE, STX, 0x25, 0x26, DLE, DLE, 0x24, 0x25, 0x26,
-				STX2, 0x24, DLE, STX, 0x25, 0x26, DLE, DLE, 0x24, 0x25, 0x26,
+				STX,
+				0x24,
+				DLE,
+				STX,
+				0x25,
+				0x26,
+				DLE,
+				DLE,
+				0x24,
+				0x25,
+				0x26,
+				STX2,
+				0x24,
+				DLE,
+				STX,
+				0x25,
+				0x26,
+				DLE,
+				DLE,
+				0x24,
+				0x25,
+				0x26,
 				STX
 			]));
 

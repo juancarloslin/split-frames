@@ -5,6 +5,8 @@ Split Buffer frames from streams
 [![Coverage Status](https://coveralls.io/repos/github/Psychopoulet/split-frames/badge.svg?branch=master)](https://coveralls.io/github/Psychopoulet/split-frames)
 [![Dependency Status](https://david-dm.org/Psychopoulet/split-frames/status.svg)](https://david-dm.org/Psychopoulet/split-frames)
 [![Dev dependency Status](https://david-dm.org/Psychopoulet/split-frames/dev-status.svg)](https://david-dm.org/Psychopoulet/split-frames?type=dev)
+[![Issues](https://img.shields.io/github/issues/Psychopoulet/split-frames.svg)](https://github.com/Psychopoulet/split-frames/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/Psychopoulet/split-frames.svg)](https://github.com/Psychopoulet/split-frames/pulls)
 
 ## Installation
 
@@ -29,18 +31,20 @@ $ npm install split-frames
 
 ```typescript
 type ControlBits = "none" | "end+1" | "end+2";
-type Tag: number | Buffer | Array<number | Buffer>
+type Tag: number | Buffer | Array< number | Buffer >
 ```
 
-  * "startWith": Tag
-  * "endWith": Tag
-  * "escapeWith": Tag
-  * "escaped": Array<Tag>
-  * "specifics": object
-  * "controlBits": ControlBits (default: "none")
+  * ```javascript "startWith": Tag ```
+  * ```javascript "startTimeout": integer ``` (default: 200)
+  * ```javascript "endWith": Tag ```
+  * ```javascript "escapeWith": number ```
+  * ```javascript "escaped": Array<number> ```
+  * ```javascript "specifics": object ```
+  * ```javascript "controlBits": ControlBits ``` (default: "none")
+
+> "startTimeout" is a timeout (in milliseconds) which end frame in "start only" mode, if no second "start" bit is encountered after the first one
 
 > "specifics" is a [ key: string => value: Tag ] object which fire a "key" event when a "value" tag is found out of the message and not escaped
-
 > ex : { "specifics": { "nak": 0x25 } } will fire an "nak" event when 0x25 bit is encountered
 
 ## Examples
@@ -178,7 +182,7 @@ stream.push(Buffer.from([ DLE, DLE, 0x27, DLE, ETX, 0x28, ETX, ACK, 0x24, 0x25 ]
 ### Want to extract specific tags ?
 
 > positive acknowledgement, negative acknowledgement, waiting for acknowledgement, whatever...
-> only with no tags || start AND end tags
+> only with no tags || start AND end tags || end tags (for firsts bits)
 
 ```javascript
 const stream = createReadStream();
@@ -212,7 +216,7 @@ stream.push(Buffer.from([ 0x23, ETX, NAK, DLE, NAK, WAK, DLE, WAK, 0x20, 0x21 ])
 
 ```javascript
 
-function computeLRC (frame) {
+function _computeLRC (frame) {
 
 	let lrc = 0x00;
 
@@ -251,7 +255,7 @@ stream.push(Buffer.from([ 0x51, 0x24, STX, 0x20, 0x21, 0x22, 0x24, ETX, 0x07, 0x
 ## Tests
 
 ```bash
-$ gulp tests
+$ npm run-script tests
 ```
 
 ## License
